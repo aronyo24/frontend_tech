@@ -1,117 +1,81 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Network, Brain, Cpu, Code, Database, Shield, Zap, GitBranch } from "lucide-react";
+import { Network, Brain, Cpu, Code, Database, Shield, Zap, GitBranch, Loader2 } from "lucide-react";
 import PageHero from "@/components/page-hero";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import axios from "axios";
+
+interface Service {
+  id: number;
+  title: string;
+  description: string;
+  icon: string;
+  category: string;
+  features: string[];
+}
+
+const IconMap: Record<string, React.ReactNode> = {
+  Network: <Network className="h-6 w-6" />,
+  Brain: <Brain className="h-6 w-6" />,
+  Cpu: <Cpu className="h-6 w-6" />,
+  Code: <Code className="h-6 w-6" />,
+  Database: <Database className="h-6 w-6" />,
+  Shield: <Shield className="h-6 w-6" />,
+  Zap: <Zap className="h-6 w-6" />,
+  GitBranch: <GitBranch className="h-6 w-6" />,
+};
 
 const Services = () => {
-  const services = [
-    {
-      icon: <Network className="h-6 w-6" />,
-      title: "Blockchain Development",
-      description: "End-to-end blockchain solutions including smart contract development, dApp creation, and distributed ledger implementation.",
-      features: [
-        "Smart Contract Development",
-        "DeFi Platform Creation",
-        "NFT Marketplace Development",
-        "Blockchain Consulting"
-      ],
-      category: "Blockchain" as const,
-    },
-    {
-      icon: <Brain className="h-6 w-6" />,
-      title: "Artificial Intelligence",
-      description: "Custom AI solutions that leverage machine intelligence to automate processes and generate insights from complex data.",
-      features: [
-        "Natural Language Processing",
-        "Computer Vision Systems",
-        "Predictive Analytics",
-        "AI Model Training & Deployment"
-      ],
-      category: "AI/ML" as const,
-    },
-    {
-      icon: <Cpu className="h-6 w-6" />,
-      title: "Machine Learning",
-      description: "Data-driven ML models for pattern recognition, prediction, and intelligent automation across various domains.",
-      features: [
-        "Supervised Learning Models",
-        "Unsupervised Learning",
-        "Reinforcement Learning",
-        "ML Pipeline Development"
-      ],
-      category: "AI/ML" as const,
-    },
-    {
-      icon: <Code className="h-6 w-6" />,
-      title: "Software Development",
-      description: "Full-stack software engineering services with modern frameworks, scalable architectures, and best practices.",
-      features: [
-        "Web Application Development",
-        "Mobile App Development",
-        "API Design & Integration",
-        "Cloud-Native Solutions"
-      ],
-      category: "Software" as const,
-    },
-    {
-      icon: <Database className="h-6 w-6" />,
-      title: "Deep Learning",
-      description: "Advanced neural network architectures for complex pattern recognition and decision-making systems.",
-      features: [
-        "Neural Network Design",
-        "Image & Video Analysis",
-        "Speech Recognition",
-        "Autonomous Systems"
-      ],
-      category: "Deep Learning" as const,
-    },
-    {
-      icon: <Shield className="h-6 w-6" />,
-      title: "Cybersecurity",
-      description: "Comprehensive security solutions to protect your digital assets and ensure data privacy.",
-      features: [
-        "Security Audits",
-        "Penetration Testing",
-        "Smart Contract Auditing",
-        "Compliance Solutions"
-      ],
-      category: "Software" as const,
-    },
-    {
-      icon: <Zap className="h-6 w-6" />,
-      title: "Research & Innovation",
-      description: "Cutting-edge research in emerging technologies to keep you ahead of the curve.",
-      features: [
-        "Technology Research",
-        "Proof of Concept Development",
-        "Innovation Consulting",
-        "Technical Feasibility Studies"
-      ],
-      category: "Deep Learning" as const,
-    },
-    {
-      icon: <GitBranch className="h-6 w-6" />,
-      title: "DevOps & Infrastructure",
-      description: "Modern DevOps practices and cloud infrastructure solutions for scalable, reliable systems.",
-      features: [
-        "CI/CD Pipeline Setup",
-        "Cloud Migration",
-        "Infrastructure as Code",
-        "Performance Optimization"
-      ],
-      category: "Software" as const,
-    }
-  ];
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<string>("All");
 
-  const categories = ["All", "Blockchain", "AI/ML", "Deep Learning", "Software"] as const;
-  type Category = (typeof categories)[number];
+  const categories = ["All", "Blockchain", "AI/ML", "Deep Learning", "Software"];
 
-  const [filter, setFilter] = useState<Category>("All");
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const response = await axios.get("http://127.0.0.1:8000/service/");
+        setServices(response.data);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching services:", err);
+        setError("Failed to load services. Please try again later.");
+        setLoading(false);
+      }
+    };
 
-  const filteredServices = filter === "All" ? services : services.filter((service) => service.category === filter);
+    fetchServices();
+  }, []);
+
+  const filteredServices = filter === "All"
+    ? services
+    : services.filter((service) => service.category === filter);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-center p-4">
+        <div>
+          <h2 className="text-2xl font-bold text-destructive mb-2">Error</h2>
+          <p className="text-muted-foreground">{error}</p>
+          <Button onClick={() => window.location.reload()} className="mt-4">
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-24 pb-20 px-4">
@@ -156,7 +120,7 @@ const Services = () => {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <div className="rounded-full bg-primary/10 p-3 text-primary">
-                      {service.icon}
+                      {IconMap[service.icon] || <Code className="h-6 w-6" />}
                     </div>
                     <div>
                       <h3 className="text-xl font-semibold mb-1">{service.title}</h3>

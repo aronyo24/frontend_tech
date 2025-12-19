@@ -1,76 +1,59 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Loader2 } from "lucide-react";
 import PageHero from "@/components/page-hero";
 import { Button } from "@/components/ui/button";
+import axios from "axios";
+
+interface Project {
+  id: number;
+  title: string;
+  subtitle: string;
+  category: string;
+  status: string;
+  timeline: string;
+  budget: string;
+  funding: string;
+  lead: string;
+  description: string;
+  cta_href: string | null;
+  cta_label: string | null;
+}
 
 const Projects = () => {
   const [filter, setFilter] = useState("All");
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const categories = ["All", "Blockchain", "AI/ML", "Deep Learning", "Software"];
 
-  const projects = [
-    {
-      title: "TRACeChain",
-      subtitle: "Building the Future of Trusted Academic Credential Verification",
-      category: "Blockchain",
-      status: "In Pilot",
-      timeline: "2025 – 2027 (Expected)",
-      budget: "£100,000",
-      funding: "Own Budget (Seeking Funder)",
-      lead: "Lead by Technoheaven",
-      description:
-        "TRACeChain is an ongoing innovation project by Technoheaven, developing a blockchain and AI-powered platform for secure, tamper-proof academic credential verification. The system enables universities to issue immutable blockchain-based credentials through secure APIs, while an AI engine helps employers validate qualifications and match graduate skills with job requirements.",
-      ctaHref: "/contact",
-      ctaLabel: "Learn More",
-    },
-    {
-      title: "NeuroMatch Insights",
-      subtitle: "AI Workforce Intelligence for Precision Talent Matching",
-      category: "AI/ML",
-      status: "In Development",
-      timeline: "2024 – 2026",
-      budget: "£250,000",
-      funding: "Grant & Strategic Partners",
-      lead: "Lead by Technoheaven",
-      description:
-        "NeuroMatch Insights delivers an enterprise AI platform that analyzes workforce capabilities, predicts upskilling pathways, and aligns talent with strategic initiatives. The solution blends natural language understanding with predictive analytics to reduce hiring cycles and improve retention across global teams.",
-      ctaHref: "/contact",
-      ctaLabel: "Request Demo",
-    },
-    {
-      title: "AegisShield Sentinel",
-      subtitle: "Autonomous Threat Detection for Critical Infrastructure",
-      category: "Deep Learning",
-      status: "Live Deployment",
-      timeline: "2023 – Present",
-      budget: "£180,000",
-      funding: "Joint Venture",
-      lead: "Lead by Technoheaven",
-      description:
-        "AegisShield Sentinel combines multimodal deep learning models with edge computing to detect, classify, and respond to real-time security threats. Deployed across smart facilities, the platform automates incident triage, compliance reporting, and adaptive security orchestration.",
-      ctaHref: "/contact",
-      ctaLabel: "Explore Deployment",
-    },
-    {
-      title: "OrionStack Nexus",
-      subtitle: "Composable SaaS Backbone for Regulated Enterprises",
-      category: "Software",
-      status: "Completed",
-      timeline: "2022 – 2024",
-      budget: "£320,000",
-      funding: "Enterprise Client",
-      lead: "Delivered by Technoheaven",
-      description:
-        "OrionStack Nexus provides a modular SaaS framework with unified data governance, automated workflows, and embedded analytics for regulated industries. The delivery included cloud migration, integration accelerators, and ongoing DevOps enablement for rapid product iteration.",
-      ctaHref: "/contact",
-      ctaLabel: "View Case Study",
-    },
-  ];
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const response = await axios.get("http://127.0.0.1:8000/research/projects/");
+        setProjects(response.data);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching projects:", err);
+        setError("Failed to load projects.");
+        setLoading(false);
+      }
+    };
+    fetchProjects();
+  }, []);
 
-  const filteredProjects = filter === "All" 
-    ? projects 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const filteredProjects = filter === "All"
+    ? projects
     : projects.filter(p => p.category === filter);
 
   return (
@@ -118,13 +101,12 @@ const Projects = () => {
                   {project.category}
                 </span>
                 <span
-                  className={`text-xs px-3 py-1 rounded-full ${
-                    project.status === "Completed"
-                      ? "bg-green-500/20 text-green-500"
-                      : project.status === "Live Deployment"
-                        ? "bg-blue-500/20 text-blue-500"
-                        : "bg-yellow-500/20 text-yellow-500"
-                  }`}
+                  className={`text-xs px-3 py-1 rounded-full ${project.status === "Completed"
+                    ? "bg-green-500/20 text-green-500"
+                    : project.status === "Live Deployment"
+                      ? "bg-blue-500/20 text-blue-500"
+                      : "bg-yellow-500/20 text-yellow-500"
+                    }`}
                 >
                   {project.status}
                 </span>
@@ -160,10 +142,10 @@ const Projects = () => {
                   {project.description}
                 </p>
 
-                {project.ctaHref && (
+                {project.cta_href && (
                   <Button variant="outline" size="sm" className="group/btn w-fit" asChild>
-                    <Link to={project.ctaHref}>
-                      {project.ctaLabel}
+                    <Link to={project.cta_href}>
+                      {project.cta_label}
                       <ExternalLink size={16} className="ml-2 transition-transform group-hover/btn:translate-x-1" />
                     </Link>
                   </Button>

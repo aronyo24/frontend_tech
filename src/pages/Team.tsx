@@ -1,11 +1,42 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Users, Lightbulb, Globe2, Heart, ArrowRight } from "lucide-react";
+import {
+  Users, Lightbulb, Globe2, Heart, ArrowRight, Loader2,
+  Linkedin, Twitter, Mail, Globe, Facebook, Github, Network, BookOpen
+} from "lucide-react";
 
 import PageHero from "@/components/page-hero";
-import { teamMembers } from "@/data/team";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import axios from "axios";
+
+interface SocialLink {
+  label: string;
+  href: string;
+  icon: string;
+}
+
+interface TeamMember {
+  id: number;
+  slug: string;
+  name: string;
+  role: string;
+  image: string | null;
+  socials: SocialLink[];
+  bio: string;
+}
+
+const SocialIconMap: Record<string, any> = {
+  Linkedin,
+  Twitter,
+  Mail,
+  Globe,
+  Facebook,
+  Github,
+  Network,
+  BookOpen,
+};
 
 const stats = [
   {
@@ -32,6 +63,33 @@ const stats = [
 ];
 
 const Team = () => {
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchTeam = async () => {
+      try {
+        const response = await axios.get("http://127.0.0.1:8000/company/team/");
+        setTeamMembers(response.data);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching team:", err);
+        setError("Failed to load team members.");
+        setLoading(false);
+      }
+    };
+    fetchTeam();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen pt-24 pb-20">
       <div className="container mx-auto px-4">
@@ -115,33 +173,27 @@ const Team = () => {
                       </div>
                     )}
 
-
-
                     <div className="space-y-1">
                       <h2 className="text-lg font-semibold text-foreground md:text-xl">{member.name}</h2>
                       <div className="h-1 w-12 rounded-full bg-primary/40 transition-all duration-300 group-hover:w-16" />
                       <p className="text-sm font-medium text-muted-foreground">{member.role}</p>
-                      <p className="text-sm font-medium  text-muted-foreground">
-                        {member.socials && member.socials.length > 0 && (
-                          <div className="mt-5 flex flex-wrap items-center gap-2">
-                            {member.socials.map((social) => {
-                              const Icon = social.icon;
-                              return (
-                                <a
-                                  key={social.label}
-                                  href={social.href}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  aria-label={social.label}
-                                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/60 bg-background/80 text-muted-foreground transition-colors duration-200 hover:border-primary hover:text-primary hover:shadow-sm"
-                                >
-                                  <Icon className="h-4 w-4" />
-                                </a>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </p>
+                      <div className="mt-5 flex flex-wrap items-center gap-2">
+                        {member.socials && member.socials.map((social) => {
+                          const Icon = SocialIconMap[social.icon] || Globe;
+                          return (
+                            <a
+                              key={social.label}
+                              href={social.href}
+                              target="_blank"
+                              rel="noreferrer"
+                              aria-label={social.label}
+                              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/60 bg-background/80 text-muted-foreground transition-colors duration-200 hover:border-primary hover:text-primary hover:shadow-sm"
+                            >
+                              <Icon className="h-4 w-4" />
+                            </a>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
 

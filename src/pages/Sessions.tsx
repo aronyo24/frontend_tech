@@ -1,43 +1,47 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Calendar, Clock, MapPin, Users } from "lucide-react";
+import { Calendar, Clock, MapPin, Users, Loader2 } from "lucide-react";
 import PageHero from "@/components/page-hero";
 import { Button } from "@/components/ui/button";
+import axios from "axios";
+
+interface Session {
+  id: number;
+  title: string;
+  date: string;
+  time: string;
+  location: string;
+  attendees: number;
+  description: string;
+}
 
 const Sessions = () => {
-  const sessions = [
-    {
-      title: "AI & Machine Learning Workshop",
-      date: "March 15, 2024",
-      time: "2:00 PM - 5:00 PM",
-      location: "Virtual Event",
-      attendees: 150,
-      description: "Deep dive into latest ML techniques and practical implementations",
-    },
-    {
-      title: "Blockchain Development Bootcamp",
-      date: "March 22, 2024",
-      time: "10:00 AM - 4:00 PM",
-      location: "Tech Hub, Floor 3",
-      attendees: 80,
-      description: "Learn to build decentralized applications from scratch",
-    },
-    {
-      title: "Research Symposium 2024",
-      date: "April 5, 2024",
-      time: "9:00 AM - 6:00 PM",
-      location: "Convention Center",
-      attendees: 300,
-      description: "Annual gathering of researchers and innovators",
-    },
-    {
-      title: "Deep Learning Masterclass",
-      date: "April 18, 2024",
-      time: "1:00 PM - 5:00 PM",
-      location: "Virtual Event",
-      attendees: 200,
-      description: "Advanced neural network architectures and training techniques",
-    },
-  ];
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchSessions = async () => {
+      try {
+        const response = await axios.get("http://127.0.0.1:8000/research/sessions/");
+        setSessions(response.data);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching sessions:", err);
+        setError("Failed to load sessions.");
+        setLoading(false);
+      }
+    };
+    fetchSessions();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-24 pb-16">

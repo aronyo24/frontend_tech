@@ -1,59 +1,49 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { FileText, Download, ExternalLink } from "lucide-react";
+import { FileText, Download, ExternalLink, Loader2 } from "lucide-react";
 import PageHero from "@/components/page-hero";
 import { Button } from "@/components/ui/button";
+import axios from "axios";
+
+interface Publication {
+  id: number;
+  title: string;
+  authors: string;
+  journal: string;
+  year: number;
+  pub_type: string;
+  abstract: string;
+  pdf_file: string | null;
+  online_link: string | null;
+}
 
 const Publications = () => {
-  const publications = [
-    {
-      title: "Advanced Neural Network Architectures for Real-Time Object Detection",
-      authors: "Dr. Sarah Johnson, Michael Chen",
-      journal: "IEEE Transactions on Neural Networks",
-      year: 2024,
-      type: "Research Paper",
-      abstract: "This paper presents novel CNN architectures optimized for real-time inference...",
-    },
-    {
-      title: "Blockchain Consensus Mechanisms: A Comprehensive Survey",
-      authors: "Anna Kowalski, David Kim",
-      journal: "Journal of Distributed Systems",
-      year: 2024,
-      type: "Survey Paper",
-      abstract: "An extensive review of consensus protocols in blockchain technology...",
-    },
-    {
-      title: "Machine Learning Approaches for Predictive Healthcare Analytics",
-      authors: "Emily Rodriguez, Dr. Sarah Johnson",
-      journal: "Healthcare Technology Review",
-      year: 2023,
-      type: "Research Paper",
-      abstract: "Novel ML techniques applied to patient outcome prediction systems...",
-    },
-    {
-      title: "Scalable Smart Contract Architecture for Enterprise Applications",
-      authors: "Anna Kowalski, James Wilson",
-      journal: "International Conference on Blockchain",
-      year: 2023,
-      type: "Conference Paper",
-      abstract: "Proposing a scalable framework for deploying smart contracts at enterprise scale...",
-    },
-    {
-      title: "Deep Reinforcement Learning for Autonomous Systems",
-      authors: "David Kim, Michael Chen",
-      journal: "AI Research Quarterly",
-      year: 2023,
-      type: "Research Paper",
-      abstract: "Exploring DRL algorithms for navigation and decision-making in robotics...",
-    },
-    {
-      title: "Natural Language Understanding with Transformer Models",
-      authors: "James Wilson, Emily Rodriguez",
-      journal: "Computational Linguistics Journal",
-      year: 2023,
-      type: "Research Paper",
-      abstract: "Fine-tuning strategies for domain-specific NLP applications...",
-    },
-  ];
+  const [publications, setPublications] = useState<Publication[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchPublications = async () => {
+      try {
+        const response = await axios.get("http://127.0.0.1:8000/research/publications/");
+        setPublications(response.data);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching publications:", err);
+        setError("Failed to load publications.");
+        setLoading(false);
+      }
+    };
+    fetchPublications();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-24 pb-16">
@@ -87,7 +77,7 @@ const Publications = () => {
                   <div className="flex items-start justify-between gap-4 mb-2">
                     <h3 className="text-xl font-semibold">{pub.title}</h3>
                     <span className="text-xs px-3 py-1 rounded-full bg-accent/50 whitespace-nowrap">
-                      {pub.type}
+                      {pub.pub_type}
                     </span>
                   </div>
                   <p className="text-sm text-primary mb-2">{pub.authors}</p>
@@ -96,14 +86,22 @@ const Publications = () => {
                   </p>
                   <p className="text-sm text-muted-foreground mb-4">{pub.abstract}</p>
                   <div className="flex gap-3">
-                    <Button variant="outline" size="sm">
-                      <Download size={16} className="mr-2" />
-                      Download PDF
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <ExternalLink size={16} className="mr-2" />
-                      View Online
-                    </Button>
+                    {pub.pdf_file && (
+                      <Button variant="outline" size="sm" asChild>
+                        <a href={pub.pdf_file} target="_blank" rel="noreferrer">
+                          <Download size={16} className="mr-2" />
+                          Download PDF
+                        </a>
+                      </Button>
+                    )}
+                    {pub.online_link && (
+                      <Button variant="outline" size="sm" asChild>
+                        <a href={pub.online_link} target="_blank" rel="noreferrer">
+                          <ExternalLink size={16} className="mr-2" />
+                          View Online
+                        </a>
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>

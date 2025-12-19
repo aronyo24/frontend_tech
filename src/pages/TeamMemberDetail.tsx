@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -6,23 +7,94 @@ import {
   Mail,
   MapPin,
   Phone,
+  Loader2,
+  Linkedin, Twitter, Globe, Facebook, Github, Network, BookOpen
 } from "lucide-react";
-import { useMemo, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import PageHero from "@/components/page-hero";
-import { findTeamMember } from "@/data/team";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import axios from "axios";
+
+interface SocialLink {
+  label: string;
+  href: string;
+  icon: string;
+}
+
+interface TeamMember {
+  id: number;
+  slug: string;
+  name: string;
+  role: string;
+  image: string | null;
+  phone: string;
+  email: string;
+  location: string;
+  socials: SocialLink[];
+  bio: string;
+  academic: string[];
+  experience: string[];
+  memberships: string[];
+  collaborations: string[];
+  focusAreas: string[];
+  publications: SocialLink[];
+}
+
+const IconMap: Record<string, any> = {
+  Linkedin,
+  Twitter,
+  Mail,
+  Globe,
+  Facebook,
+  Github,
+  Network,
+  BookOpen,
+};
 
 const TeamMemberDetail = () => {
   const navigate = useNavigate();
   const { slug } = useParams<{ slug: string }>();
+  const [member, setMember] = useState<TeamMember | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const member = useMemo(() => findTeamMember(slug ?? ""), [slug]);
+  useEffect(() => {
+    const fetchMember = async () => {
+      try {
+        // We need to find by slug. Our API currently only has id-based detail.
+        // Let's filter the list or add a slug-based detail view in backend.
+        // For now, let's fetch all and find the one with the slug, or better, 
+        // assume we can filter by slug in the list view.
+        const response = await axios.get(`http://127.0.0.1:8000/company/team/?slug=${slug}`);
+        const found = response.data.find((m: TeamMember) => m.slug === slug);
+        if (found) {
+          setMember(found);
+        } else {
+          setError("Member not found");
+        }
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching member:", err);
+        setError("Failed to load profile.");
+        setLoading(false);
+      }
+    };
+    fetchMember();
+  }, [slug]);
 
-  if (!member) {
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error || !member) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-100 via-white to-slate-100 pt-24 pb-16 text-slate-900 transition-colors dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-slate-100">
         <div className="container mx-auto px-4">
@@ -210,7 +282,7 @@ const TeamMemberDetail = () => {
               </Accordion>
             )}
 
-            
+
           </motion.div>
 
           <motion.aside
@@ -219,7 +291,7 @@ const TeamMemberDetail = () => {
             transition={{ delay: 0.1 }}
             className="order-2 flex flex-col gap-6 rounded-3xl border border-slate-200/80 bg-white/80 p-6 shadow-xl backdrop-blur-sm dark:border-slate-800/70 dark:bg-slate-900/70 dark:shadow-[0_25px_45px_rgba(2,6,23,0.45)] lg:order-1 lg:sticky lg:top-28"
           >
-           
+
 
             <div className="space-y-4 text-sm text-slate-600 dark:text-slate-200">
               <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Contact</h3>
@@ -256,7 +328,7 @@ const TeamMemberDetail = () => {
                 <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Publication Profile</h3>
                 <div className="space-y-2">
                   {member.publications.map((publication) => {
-                    const Icon = publication.icon;
+                    const Icon = IconMap[publication.icon] || Network;
                     return (
                       <a
                         key={publication.label}
@@ -279,7 +351,7 @@ const TeamMemberDetail = () => {
                 <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Web Page &amp; Social Link</h3>
                 <div className="space-y-2">
                   {member.socials.map((social) => {
-                    const Icon = social.icon;
+                    const Icon = IconMap[social.icon] || Globe;
                     return (
                       <a
                         key={social.label}

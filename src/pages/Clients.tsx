@@ -1,53 +1,28 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowUpRight, Quote } from "lucide-react";
+import { ArrowUpRight, Quote, Loader2 } from "lucide-react";
 import PageHero from "@/components/page-hero";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import axios from "axios";
 
-import bheUniLogo from "@/data/client/bhe_uni.png";
-import dmsLogo from "@/data/client/dms.png";
-import lead2EnrollmentLogo from "@/data/client/lead2enrolment.png";
-import unityAgroLogo from "@/data/client/unityagro.png";
+interface Client {
+  id: number;
+  name: string;
+  industry: string;
+  tagline: string;
+  description: string;
+  website: string;
+  logo: string;
+}
 
-const clientShowcase = [
-  {
-    name: "BHE Uni",
-    industry: "Education Technology",
-    tagline: "Educational technology solutions for global learning, delivering cutting-edge platforms for modern education.",
-    description:
-      "We co-build BHE Uni's modular digital campus—powering multi-language LMS experiences, analytics-rich dashboards, and accessible learning journeys for global cohorts.",
-    website: "https://bheuni.com",
-    logo: bheUniLogo,
-  },
-  {
-    name: "DMS",
-    industry: "Logistics & Operations",
-    tagline: "Digital management and logistics services, streamlining operations with advanced technology solutions.",
-    description:
-      "Our delivery teams designed the logistics control tower for DMS, integrating IoT telemetry, automated workflows, and predictive reporting for regional supply chains.",
-    website: "https://dms.com.bd",
-    logo: dmsLogo,
-  },
-  {
-    name: "Lead2Enrollment",
-    industry: "Enrollment Platforms",
-    tagline: "Student enrollment and lead management solutions, transforming how institutions connect with students.",
-    description:
-      "We modernised Lead2Enrollment's CRM and marketing automation stack, enabling admissions teams to personalise outreach, model conversion funnels, and launch global campaigns.",
-    website: "https://lead2enrollment.com",
-    logo: lead2EnrollmentLogo,
-  },
-  {
-    name: "UnityAgro",
-    industry: "AgriTech",
-    tagline: "Accounts management, CRM, and business automation for agricultural operations.",
-    description:
-      "UnityAgro partners with Technoheaven to run an integrated ERP—bringing together inventory, grower relations, and financial controls across distributed agribusiness hubs.",
-    website: "https://unityagro.com",
-    logo: unityAgroLogo,
-  },
-];
+interface Testimonial {
+  id: number;
+  quote: string;
+  name: string;
+  role: string;
+}
 
 const partnershipHighlights = [
   {
@@ -67,28 +42,38 @@ const partnershipHighlights = [
   },
 ];
 
-const testimonials = [
-  {
-    quote:
-      "Technoheaven became the backbone of our digital campus. Their team translated academic outcomes into a scalable product roadmap and delivered ahead of schedule.",
-    name: "Dr. Nafisa Rahman",
-    role: "Vice Chancellor, BHE Uni",
-  },
-  {
-    quote:
-      "The logistics command centre they engineered connects every stakeholder in real time. We now anticipate disruption and optimise routes proactively.",
-    name: "Syed Mahmud",
-    role: "Managing Director, DMS",
-  },
-  {
-    quote:
-      "Our enrolment teams close cycles 3x faster thanks to the automation and analytics stack Technoheaven built. Collaboration has been seamless from day one.",
-    name: "Farhana Akter",
-    role: "Head of Admissions, Lead2Enrollment",
-  },
-];
-
 const Clients = () => {
+  const [clients, setClients] = useState<Client[]>([]);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [clientsRes, testimonialsRes] = await Promise.all([
+          axios.get("http://127.0.0.1:8000/company/clients/"),
+          axios.get("http://127.0.0.1:8000/company/testimonials/")
+        ]);
+        setClients(clientsRes.data);
+        setTestimonials(testimonialsRes.data);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching client data:", err);
+        setError("Failed to load client data.");
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen pt-24 pb-20">
       <div className="container mx-auto px-4">
@@ -113,7 +98,7 @@ const Clients = () => {
           </div>
 
           <div className="grid gap-8 md:grid-cols-2">
-            {clientShowcase.map((client, index) => (
+            {clients.map((client, index) => (
               <motion.div
                 key={client.name}
                 initial={{ opacity: 0, y: 20 }}
