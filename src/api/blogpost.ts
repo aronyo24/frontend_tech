@@ -10,6 +10,7 @@ export interface BlogPost {
   updated_at: string;
   author: number;
   author_name: string;
+  author_full_name: string;
   status: "draft" | "pending" | "published" | "rejected";
   status_display?: string;
   admin_comment?: string | null;
@@ -94,9 +95,27 @@ export async function updateBlogPost(id: number | string, payload: Partial<Creat
 
 
 // Admin moderation
-export async function moderateBlogPost(id: number, status: "published" | "rejected", admin_comment?: string): Promise<BlogPost> {
-  const { data } = await apiClient.patch<BlogPost>(`/blogpost/blogposts/${id}/moderate/`, { status, admin_comment });
+export async function moderateBlogPost(slug: string, status: "published" | "rejected", admin_comment?: string): Promise<BlogPost> {
+  const { data } = await apiClient.patch<BlogPost>(`/blogpost/blogposts/${slug}/moderate/`, { status, admin_comment });
   return data;
+}
+
+export interface Notification {
+  id: number;
+  user: number;
+  message: string;
+  link: string;
+  read: boolean;
+  created_at: string;
+}
+
+export async function fetchNotifications(): Promise<Notification[]> {
+  const { data } = await apiClient.get<Notification[]>("/blogpost/blogposts/notifications/");
+  return data;
+}
+
+export async function markNotificationRead(id: number): Promise<void> {
+  await apiClient.post(`/blogpost/blogposts/notifications/${id}/read/`);
 }
 
 // Comments

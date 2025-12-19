@@ -23,11 +23,14 @@ import SignUp from "./pages/SignUp";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import WritePost from "./pages/WritePost";
+
 import ProfileEdit from "./pages/ProfileEdit";
 import ResetPassword from "./pages/ResetPassword";
 import OtpVerification from "./pages/OtpVerification";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
+import AdminModeration from "./pages/AdminModeration";
 
 const queryClient = new QueryClient();
 
@@ -88,6 +91,14 @@ const App = () => (
                     <ProtectedRoute>
                       <WritePost />
                     </ProtectedRoute>
+                  )}
+                />
+                <Route
+                  path="/admin/moderation"
+                  element={(
+                    <AdminRoute>
+                      <AdminModeration />
+                    </AdminRoute>
                   )}
                 />
                 <Route path="*" element={<NotFound />} />

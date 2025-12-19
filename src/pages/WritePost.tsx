@@ -58,9 +58,10 @@ const defaultContent = `<h2 style="margin-bottom:8px;">Lead with a compelling hy
 const categories = [
   "Artificial Intelligence",
   "Blockchain",
-  "Data Science",
-  "Human Computer Interaction",
-  "Emerging Tech",
+  "Machine Learning",
+  "AI Research",
+  "Software Engineering",
+  "Others",
 ];
 
 const fontFamilies = ["Inter", "Lora", "IBM Plex Mono", "Playfair Display", "Fira Sans"];
@@ -87,6 +88,7 @@ const WritePost = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState(""); // Added state
   const { user } = useAuth();
   const { toast } = useToast();
   const { id } = useParams();
@@ -250,6 +252,7 @@ const WritePost = () => {
         });
       }
       setSubmitSuccess(true);
+      setSubmitMessage("Post submitted for review! Redirecting..."); // Added message
       setTimeout(() => navigate("/dashboard"), 1500);
     } catch (err) {
       setSubmitError("Failed to submit post. Please try again.");
@@ -262,7 +265,7 @@ const WritePost = () => {
     setSubmitting(true);
     setSubmitError(null);
     try {
-        if (editingId) {
+      if (editingId) {
         await updateBlogPost(editingId, {
           title,
           sub_title: subtitle,
@@ -277,22 +280,24 @@ const WritePost = () => {
           status: "draft",
         });
       } else {
-          await createBlogPost({
-            title,
-            sub_title: subtitle,
-            executive_summary: summary,
-            content: editorHtml,
-            banner_image: banner?.file || null,
-            category,
-            tags,
-            allow_comments: allowComments,
-            schedule_date: scheduleDate,
-            schedule_time: scheduleTime,
-            status: "draft",
-          });
+        await createBlogPost({
+          title,
+          sub_title: subtitle,
+          executive_summary: summary,
+          content: editorHtml,
+          banner_image: banner?.file || null,
+          category,
+          tags,
+          allow_comments: allowComments,
+          schedule_date: scheduleDate,
+          schedule_time: scheduleTime,
+          status: "draft",
+        });
       }
       setSubmitSuccess(true);
+      setSubmitMessage("Draft saved successfully. Redirecting...");
       toast?.({ title: "Draft saved." });
+      setTimeout(() => navigate("/dashboard"), 1500);
     } catch (err) {
       setSubmitError("Failed to save draft. Please try again.");
     } finally {
@@ -366,7 +371,7 @@ const WritePost = () => {
             <div className="mt-2 text-destructive text-sm">{submitError}</div>
           )}
           {submitSuccess && (
-            <div className="mt-2 text-emerald-600 text-sm">Post submitted for review! Redirecting...</div>
+            <div className="mt-2 text-emerald-600 text-sm">{submitMessage}</div>
           )}
         </header>
 
@@ -551,20 +556,20 @@ const WritePost = () => {
                   </TabsList>
                   <TabsContent value="write">
                     <div className="min-h-[400px] rounded-lg border border-input bg-background p-6 shadow-sm" role="textbox">
-                                {isFetchingPost ? (
-                                  <div className="flex h-96 items-center justify-center">
-                                    <div className="text-sm text-muted-foreground">Loading post...</div>
-                                  </div>
-                                ) : (
-                                  <div
-                                    ref={editorRef}
-                                    className="prose max-w-none text-base leading-relaxed text-foreground focus:outline-none"
-                                    contentEditable
-                                    suppressContentEditableWarning
-                                    dangerouslySetInnerHTML={{ __html: editorHtml }}
-                                    onInput={syncEditorState}
-                                  />
-                                )}
+                      {isFetchingPost ? (
+                        <div className="flex h-96 items-center justify-center">
+                          <div className="text-sm text-muted-foreground">Loading post...</div>
+                        </div>
+                      ) : (
+                        <div
+                          ref={editorRef}
+                          className="prose max-w-none text-base leading-relaxed text-foreground focus:outline-none"
+                          contentEditable
+                          suppressContentEditableWarning
+                          dangerouslySetInnerHTML={{ __html: editorHtml }}
+                          onInput={syncEditorState}
+                        />
+                      )}
                     </div>
                   </TabsContent>
                   <TabsContent value="preview">

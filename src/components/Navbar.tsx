@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { useTheme } from "@/components/theme-provider";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Notifications from "./Notifications";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -158,6 +159,7 @@ const Navbar = () => {
 
           {/* Right Side - Login & Mobile Menu */}
           <div className="flex items-center gap-4">
+            <Notifications />
             <Button
               type="button"
               variant="outline"
@@ -196,6 +198,11 @@ const Navbar = () => {
                   <DropdownMenuItem asChild>
                     <Link to="/dashboard">Dashboard</Link>
                   </DropdownMenuItem>
+                  {user?.is_staff && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin/moderation">Admin Panel</Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem
                     onSelect={(event) => {
                       event.preventDefault();
@@ -209,11 +216,18 @@ const Navbar = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Link to="/signup" className="hidden md:block">
-                <Button variant="outline">
-                  Sign Up
-                </Button>
-              </Link>
+              <div className="hidden md:flex items-center gap-2">
+                <Link to="/signin">
+                  <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+                    Sign In
+                  </Button>
+                </Link>
+                <Link to="/signup">
+                  <Button variant="default">
+                    Sign Up
+                  </Button>
+                </Link>
+              </div>
             )}
 
             {/* Mobile Menu Button */}
@@ -266,13 +280,13 @@ const Navbar = () => {
                   to={link.path}
                   onClick={() => setIsOpen(false)}
                   className={`block px-4 py-2 rounded-md transition-all ${isActive(link.path)
-                      ? "text-primary font-medium bg-muted"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    ? "text-primary font-medium bg-muted"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
                     }`}
                 >
                   {link.name}
                 </Link>
-                ))}
+              ))}
               <div className="pt-2 border-t border-border">
                 <Accordion type="multiple" className="w-full">
                   {dropdownGroups.map(({ label, key }) => (
@@ -326,6 +340,11 @@ const Navbar = () => {
                     <Link to="/dashboard" onClick={() => setIsOpen(false)} className="text-sm font-medium text-primary">
                       Go to dashboard
                     </Link>
+                    {user?.is_staff && (
+                      <Link to="/admin/moderation" onClick={() => setIsOpen(false)} className="text-sm font-medium text-primary">
+                        Admin Panel
+                      </Link>
+                    )}
                     <Button
                       type="button"
                       variant="outline"
@@ -340,11 +359,18 @@ const Navbar = () => {
                   </div>
                 </div>
               ) : (
-                <Link to="/signup" onClick={() => setIsOpen(false)}>
-                  <Button variant="outline" className="w-full mt-4">
-                    Sign Up
-                  </Button>
-                </Link>
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <Link to="/signin" onClick={() => setIsOpen(false)}>
+                    <Button variant="outline" className="w-full">
+                      Sign In
+                    </Button>
+                  </Link>
+                  <Link to="/signup" onClick={() => setIsOpen(false)}>
+                    <Button variant="default" className="w-full">
+                      Sign Up
+                    </Button>
+                  </Link>
+                </div>
               )}
             </div>
           </motion.div>

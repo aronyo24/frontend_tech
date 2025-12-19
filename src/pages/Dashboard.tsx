@@ -39,7 +39,7 @@ type PostItem = {
   id: number;
   slug?: string;
   title: string;
-  status: "Published" | "Pending Review" | "Rejected";
+  status: "Published" | "Pending Review" | "Rejected" | "Draft";
   lastUpdated: string;
   likes_count?: number | null;
   comments_count?: number | null;
@@ -141,6 +141,7 @@ const Dashboard = () => {
       if (status === "published") return "Published";
       if (status === "pending") return "Pending Review";
       if (status === "rejected") return "Rejected";
+      if (status === "draft") return "Draft";
       return status;
     };
     const toPostItem = (post: BlogPost): PostItem => ({
@@ -158,6 +159,7 @@ const Dashboard = () => {
       published: userPosts.filter((p) => p.status === "published").map(toPostItem),
       pending: userPosts.filter((p) => p.status === "pending").map(toPostItem),
       rejected: userPosts.filter((p) => p.status === "rejected").map(toPostItem),
+      draft: userPosts.filter((p) => p.status === "draft").map(toPostItem),
     } as const;
   }, [posts, user]);
 
@@ -250,6 +252,7 @@ const Dashboard = () => {
                 Published: "border-emerald-200 bg-emerald-500/10 text-emerald-600",
                 "Pending Review": "border-amber-200 bg-amber-500/10 text-amber-600",
                 Rejected: "border-rose-200 bg-rose-500/10 text-rose-600",
+                Draft: "border-slate-200 bg-slate-500/10 text-slate-600",
               }[post.status];
               return (
                 <TableRow key={post.id} className="group">
@@ -291,9 +294,9 @@ const Dashboard = () => {
                     </Button>
                     {actionOpenId === post.id && (
                       <div className="absolute right-0 top-6 z-50 w-40 rounded-md border bg-background p-2 shadow">
-                        <button onClick={() => { setActionOpenId(null); navigate(`/dashboard/write/${post.id}`); }} className="block w-full text-left px-2 py-2 text-sm hover:bg-muted">Edit</button>
-                        <button onClick={() => { setActionOpenId(null); const p = posts.find((x) => x.id === post.id); if (p?.slug) window.open(`/blog/${p.slug}`, "_blank"); }} className="block w-full text-left px-2 py-2 text-sm hover:bg-muted">Preview</button>
-                        <button onClick={() => { const p = posts.find((x) => x.id === post.id); void handleDelete(p?.slug, post.id); }} className="block w-full text-left px-2 py-2 text-sm text-destructive hover:bg-muted">Delete</button>
+                        <button onClick={() => { setActionOpenId(null); if (post.slug) navigate(`/dashboard/write/${post.slug}`); }} className="block w-full text-left px-2 py-2 text-sm hover:bg-muted">Edit</button>
+                        <button onClick={() => { setActionOpenId(null); if (post.slug) window.open(`/blog/${post.slug}`, "_blank"); }} className="block w-full text-left px-2 py-2 text-sm hover:bg-muted">Preview</button>
+                        <button onClick={() => { void handleDelete(post.slug, post.id); }} className="block w-full text-left px-2 py-2 text-sm text-destructive hover:bg-muted">Delete</button>
                       </div>
                     )}
                   </TableCell>
@@ -399,37 +402,37 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-            
+
           </aside>
 
           <section className="space-y-6">
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               {[
-                  {
-                    label: "Total Posts",
-                    value: stats ? String(stats.total_posts) : "—",
-                    // change: "+12% vs last month",
-                    icon: FileText,
-                  },
-                  {
-                    label: "Total Views",
-                    value: stats ? String(stats.total_views) : "—",
-                    // change: "+8% vs last month",
-                    icon: Eye,
-                  },
-                  {
-                    label: "Total Likes",
-                    value: stats ? String(stats.total_likes) : "—",
-                    // change: "+5% vs last month",
-                    icon: Heart,
-                  },
-                  {
-                    label: "Total Comments",
-                    value: stats ? String(stats.total_comments) : "—",
-                    // change: "+3% vs last month",
-                    icon: MessageCircle,
-                  },
-                ].map((metric) => (
+                {
+                  label: "Total Posts",
+                  value: stats ? String(stats.total_posts) : "—",
+                  // change: "+12% vs last month",
+                  icon: FileText,
+                },
+                {
+                  label: "Total Views",
+                  value: stats ? String(stats.total_views) : "—",
+                  // change: "+8% vs last month",
+                  icon: Eye,
+                },
+                {
+                  label: "Total Likes",
+                  value: stats ? String(stats.total_likes) : "—",
+                  // change: "+5% vs last month",
+                  icon: Heart,
+                },
+                {
+                  label: "Total Comments",
+                  value: stats ? String(stats.total_comments) : "—",
+                  // change: "+3% vs last month",
+                  icon: MessageCircle,
+                },
+              ].map((metric) => (
                 <Card key={metric.label} className="border border-primary/10">
                   <CardContent className="flex flex-col gap-4 p-5">
                     <div className="flex items-center justify-between">
@@ -439,7 +442,7 @@ const Dashboard = () => {
                       <metric.icon className="h-5 w-5 text-primary" />
                     </div>
                     <p className="text-3xl font-bold text-foreground">{metric.value}</p>
-                   
+
                   </CardContent>
                 </Card>
               ))}
@@ -477,11 +480,16 @@ const Dashboard = () => {
                       <span className="h-2 w-2 rounded-full bg-rose-500" />
                       Rejected
                     </TabsTrigger>
+                    <TabsTrigger value="draft" className="flex items-center gap-2 rounded-lg px-4 py-2">
+                      <span className="h-2 w-2 rounded-full bg-slate-500" />
+                      Drafts
+                    </TabsTrigger>
                   </TabsList>
                   <TabsContent value="all">{renderPostTable(filteredPosts.all)}</TabsContent>
                   <TabsContent value="published">{renderPostTable(filteredPosts.published)}</TabsContent>
                   <TabsContent value="pending">{renderPostTable(filteredPosts.pending)}</TabsContent>
                   <TabsContent value="rejected">{renderPostTable(filteredPosts.rejected)}</TabsContent>
+                  <TabsContent value="draft">{renderPostTable(filteredPosts.draft)}</TabsContent>
                 </Tabs>
               </CardContent>
             </Card>
