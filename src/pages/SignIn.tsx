@@ -7,7 +7,7 @@ import PageHero from "@/components/page-hero";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { ensureCsrfCookie, getGoogleAuthUrl, loginUser } from "@/api/auth";
+import { ensureCsrfCookie, getGoogleAuthUrl, loginUser, resendOtp } from "@/api/auth";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface SignInFormState {
@@ -39,6 +39,8 @@ const SignIn = () => {
     remember: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showVerifyInput, setShowVerifyInput] = useState(false);
+  const [verifyEmail, setVerifyEmail] = useState("");
 
   useEffect(() => {
     ensureCsrfCookie().catch(() => {
@@ -101,7 +103,11 @@ const SignIn = () => {
   };
 
   const handleGoogle = () => {
-    window.location.href = getGoogleAuthUrl();
+    const url = getGoogleAuthUrl();
+    // debug: log the URL used for Google auth
+    // eslint-disable-next-line no-console
+    console.debug('Redirecting to Google auth URL:', url);
+    window.location.assign(url);
   };
 
   return (
@@ -194,7 +200,12 @@ const SignIn = () => {
               variant="outline"
               className="w-full"
               size="lg"
-              onClick={handleGoogle}
+              onClick={() => {
+                const url = getGoogleAuthUrl("/dashboard");
+                if (typeof window !== "undefined") {
+                  window.location.href = url;
+                }
+              }}
             >
               <span className="mr-2 flex h-5 w-5 items-center justify-center">
                 <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
@@ -211,6 +222,62 @@ const SignIn = () => {
               <Link to="/signup" className="font-medium text-primary hover:underline">
                 Sign Up
               </Link>
+            </div>
+            <div className="mt-3 text-center text-sm">
+              {!showVerifyInput ? (
+                <>
+                  <span className="text-muted-foreground">Already registered but didn't verify your email? </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowVerifyInput(true);
+                      setVerifyEmail(formState.email || "");
+                    }}
+                    className="font-medium text-primary hover:underline"
+                  >
+                    Resend verification email / Verify now
+                  </button>
+                </>
+              ) : (
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex w-full max-w-sm items-center gap-2">
+                    <Input
+                      type="email"
+                      placeholder="your@email.com"
+                      value={verifyEmail}
+                      onChange={(e) => setVerifyEmail(e.target.value)}
+                      className="!p-2"
+                    />
+                    <Button
+                      onClick={async () => {
+                        const email = verifyEmail.trim();
+                        if (!email) {
+                          toast({ title: "Email required", description: "Enter an email to resend verification.", variant: "destructive" });
+                          return;
+                        }
+                        try {
+                          setIsSubmitting(true);
+                          await ensureCsrfCookie();
+                          const resp = await resendOtp({ email });
+                          toast({ title: "Verification sent", description: (resp && (resp.detail as string)) || "Check your inbox for the code." });
+                          // navigate to verify page to enter code
+                          navigate("/verify-otp", { state: { email, mode: "register" as const } });
+                          setShowVerifyInput(false);
+                        } catch (err) {
+                          const msg = axios.isAxiosError(err) ? (err.response?.data as any)?.detail || err.message : String(err);
+                          toast({ title: "Unable to send", description: msg, variant: "destructive" });
+                        } finally {
+                          setIsSubmitting(false);
+                        }
+                      }}
+                    >
+                      Send
+                    </Button>
+                    <Button variant="ghost" onClick={() => setShowVerifyInput(false)}>Cancel</Button>
+                  </div>
+                  <div className="text-xs text-muted-foreground">We'll send a verification code to the entered address.</div>
+                </div>
+              )}
             </div>
           </div>
         </motion.div>

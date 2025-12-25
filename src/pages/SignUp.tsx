@@ -2,6 +2,7 @@ import axios from "axios";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
+import { getGoogleAuthUrl } from "@/api/auth";
 import { Mail, Lock, User, Phone, Flag, Briefcase, Image as ImageIcon } from "lucide-react";
 import { COUNTRY_OPTIONS } from "@/data/countries";
 import PageHero from "@/components/page-hero";
@@ -122,6 +123,14 @@ const SignUp = () => {
       // Silent failure.
     });
   }, []);
+
+  const handleGoogle = () => {
+    const url = getGoogleAuthUrl();
+    // debug: log the URL used for Google auth
+    // eslint-disable-next-line no-console
+    console.debug('Redirecting to Google auth URL:', url);
+    window.location.assign(url);
+  };
 
   const dialCodeOptions = useMemo(() => {
     const unique = new Map<string, { name: string; code: string }>();
@@ -507,6 +516,22 @@ const SignUp = () => {
               >
                 {isSubmitting ? "Creating account..." : "Create Account"}
               </Button>
+            <div className="my-6 flex items-center gap-3 text-sm text-muted-foreground">
+              <div className="h-px flex-1 bg-border" />
+              <span>or continue with</span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+            <Button type="button" variant="outline" className="w-full" size="lg" onClick={handleGoogle}>
+              <span className="mr-2 flex h-5 w-5 items-center justify-center">
+                <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+                  <path d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h6.5c-.3 1.5-1.2 2.8-2.6 3.6v3h4.2c2.4-2.2 3.4-5.4 3.4-8.7z" fill="#4285F4" />
+                  <path d="M12 24c3.2 0 5.9-1 7.9-2.7l-4.2-3c-1.1.7-2.5 1.1-3.8 1.1-2.9 0-5.3-1.9-6.1-4.6H1.4v2.9C3.4 21.2 7.3 24 12 24z" fill="#34A853" />
+                  <path d="M5.9 14.8c-.2-.7-.4-1.4-.4-2.2s.1-1.5.4-2.2V7.5H1.4C.5 9.2 0 11 0 12.8s.5 3.6 1.4 5.3l4.5-3.3z" fill="#FBBC05" />
+                  <path d="M12 4.7c1.7 0 3.2.6 4.3 1.7l3.2-3.2C17.9 1.2 15.2 0 12 0 7.3 0 3.4 2.8 1.4 7.5l4.5 3.3c.8-2.7 3.2-4.6 6.1-4.6z" fill="#EA4335" />
+                </svg>
+              </span>
+              Continue with Google
+            </Button>
             </form>
             <div className="mt-6 text-center text-sm">
               <span className="text-muted-foreground">Already have an account? </span>

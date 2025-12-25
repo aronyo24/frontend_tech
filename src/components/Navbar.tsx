@@ -159,7 +159,7 @@ const Navbar = () => {
 
           {/* Right Side - Login & Mobile Menu */}
           <div className="flex items-center gap-4">
-            <Notifications />
+            {isAuthenticated && <Notifications />}
             <Button
               type="button"
               variant="outline"
@@ -216,14 +216,14 @@ const Navbar = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <div className="hidden md:flex items-center gap-2">
+              <div className="hidden md:flex items-center gap-3">
                 <Link to="/signin">
-                  <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+                  <Button variant="ghost" className="text-sm px-3 py-2 text-muted-foreground hover:text-foreground">
                     Sign In
                   </Button>
                 </Link>
                 <Link to="/signup">
-                  <Button variant="default">
+                  <Button variant="default" className="text-sm px-4 py-2 rounded-full">
                     Sign Up
                   </Button>
                 </Link>

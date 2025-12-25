@@ -2,6 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import { ThemeProvider } from "./components/theme-provider";
@@ -34,8 +35,55 @@ import AdminModeration from "./pages/AdminModeration";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
+const App = () => {
+  useEffect(() => {
+    // Ping backend to log visitor (IP-based geolocation on server).
+    // Use Vite env `VITE_API_URL` when available, otherwise default to localhost:8000.
+    const API_BASE = (import.meta.env && import.meta.env.VITE_API_URL) || 'http://127.0.0.1:8000';
+
+    // 1) Server-side IP-based log (fallback)
+    fetch(`${API_BASE}/visitors/log/`).catch(() => {});
+
+    // 2) Client-side: generate stable client id and obtain IP/geo from a public API,
+    // then POST to backend so admin can see the client-side visitor record.
+    try {
+      let clientId = localStorage.getItem('visitor_client_id');
+      if (!clientId && window.crypto && typeof window.crypto.randomUUID === 'function') {
+        clientId = window.crypto.randomUUID();
+        localStorage.setItem('visitor_client_id', clientId);
+      }
+
+      fetch('https://ipapi.co/json/')
+        .then((r) => r.json())
+        .then((geo) => {
+          const payload = {
+            client_id: clientId,
+            ip: geo.ip,
+            country: geo.country_name || geo.country,
+            region: geo.region,
+            city: geo.city,
+            path: window.location.pathname,
+            user_agent: navigator.userAgent,
+          };
+
+          fetch(`${API_BASE}/visitors/log_client/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            credentials: 'include',
+          })
+            .then((res) => res.json())
+            .then((d) => console.debug('Client visitor logged:', d))
+            .catch((e) => console.debug('Client log failed', e));
+        })
+        .catch(() => {});
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <ThemeProvider>
         <AuthProvider>
@@ -109,6 +157,7 @@ const App = () => (
       </ThemeProvider>
     </TooltipProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;

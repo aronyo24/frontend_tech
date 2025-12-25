@@ -1,3 +1,4 @@
+import axios from "axios";
 import { apiClient, setCsrfToken } from "@/api/apiClient";
 import type {
   LoginResponse,
@@ -206,9 +207,10 @@ export const updateProfile = async (payload: ProfileUpdatePayload): Promise<Prof
   return data;
 };
 
-export const getGoogleAuthUrl = (redirectPath = "/home"): string => {
+
+export const getGoogleAuthUrl = (redirectPath = "/dashboard"): string => {
   const rawBaseUrl = import.meta.env.VITE_GOOGLE_LOGIN_URL ??
-    "https://socialmates-6aa3380f13f2.herokuapp.com/account/google/login/";
+    "http://localhost:8000/accounts/google/login";
 
   const normalizedBaseUrl = (() => {
     try {
@@ -225,7 +227,7 @@ export const getGoogleAuthUrl = (redirectPath = "/home"): string => {
       }
       return url.toString();
     } catch (_error) {
-      return "https://socialmates-6aa3380f13f2.herokuapp.com/account/google/login/";
+      return "http://localhost:8000/accounts/google/login";
     }
   })();
 
@@ -243,8 +245,10 @@ export const getGoogleAuthUrl = (redirectPath = "/home"): string => {
 
 export async function ensureCsrfCookie(): Promise<void> {
   try {
-    const { data } = await apiClient.get("/auth/status/");
-    applyCsrfFromResponse(data);
+    const { data } = await apiClient.get("/auth/home/");
+    if (typeof data?.csrf_token === "string") {
+      setCsrfToken(data.csrf_token);
+    }
   } catch (error) {
     if (import.meta.env.DEV) {
       console.warn("Failed to prefetch CSRF cookie", error);
